@@ -2,7 +2,7 @@
 
 import { devtools } from "frog/dev";
 // import { neynar } from 'frog/hubs'
-import { Button, Button, Button, Frog, TextInput } from "frog";
+import { Button, Frog, TextInput } from "frog";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
@@ -52,7 +52,11 @@ app.frame("/poster", (c) => {
     });
   }
   return c.res({
-    image: images[0]!.src,
+    image: (
+      <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+        Let's get you started!
+      </div>
+    ),
     intents: [<Button action="/poster/1">Get Started</Button>],
   });
 });
@@ -61,7 +65,11 @@ app.frame("/poster/:id", async (c) => {
   const { id } = c.req.param();
   if (+id === 1) {
     return c.res({
-      image: images[1]!.src,
+      image: (
+        <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+          Please add your content in the input.
+        </div>
+      ),
       intents: [
         <TextInput placeholder="Enter your content here" />,
         <Button action="/poster/2">Confirm Content</Button>,
@@ -90,7 +98,11 @@ app.frame("/poster/:id", async (c) => {
     }
     // call contract
     return c.res({
-      image: images[2]!.src,
+      image: (
+        <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+          It's time to upload your content onchain!
+        </div>
+      ),
       intents: [
         <Button.Transaction
           target={`/create?ipfsHash=${ipfsHash}`}
@@ -116,7 +128,11 @@ app.frame("/poster/:id", async (c) => {
     });
   }
   return c.res({
-    image: images[0]!.src,
+    image: (
+      <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+        Let's get you started!
+      </div>
+    ),
     intents: [<Button action="/poster/1">Get Started</Button>],
   });
 });
