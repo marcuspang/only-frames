@@ -16,8 +16,6 @@ import { paywallTokenABI as nftabi } from "./nftabi";
 const app = new Frog({
   assetsPath: "/",
   basePath: "/api",
-  // Supply a Hub to enable frame verification.
-  // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 }).use(neynar({ apiKey: "NEYNAR_FROG_FM", features: ["interactor", "cast"] }));
 
 // Uncomment to use Edge Runtime
@@ -25,24 +23,35 @@ const app = new Frog({
 
 const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
 
-const images: {
-  src: string;
-}[] = [
-  {
-    src: "https://ipfs.decentralized-content.com/ipfs/bafybeifs7vasy5zbmnpixt7tb6efi35kcrmpoz53d3vg5pwjz52q7fl6pq/cook.png",
-  },
-  {
-    src: "https://remote-image.decentralized-content.com/image?url=https%3A%2F%2Fipfs.decentralized-content.com%2Fipfs%2Fbafybeiegrnialwu66u3nwzkn4gik4i2x2h4ip7y3w2dlymzlpxb5lrqbom&w=1920&q=75",
-  },
-  {
-    src: "https://remote-image.decentralized-content.com/image?url=https%3A%2F%2Fipfs.decentralized-content.com%2Fipfs%2Fbafybeiegrnialwu66u3nwzkn4gik4i2x2h4ip7y3w2dlymzlpxb5lrqbom&w=1920&q=75",
-  },
-];
-
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
   throw new Error("Private key not found");
 }
+
+app.frame("/", (c) => {
+  return c.res({
+    image: (
+      <div
+        style={{
+          color: "white",
+          display: "flex",
+          flexDirection: "column",
+          fontSize: 60,
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
+        <div>Welcome to OnlyFrames!</div>
+        <div>Let's get you started.</div>
+      </div>
+    ),
+    intents: [
+      <Button action="/poster">Create Content</Button>,
+      <Button action="/view">View Content</Button>,
+    ],
+  });
+});
 
 app.frame("/poster", (c) => {
   const { transactionId } = c;
@@ -111,12 +120,6 @@ app.frame("/poster/:id", async (c) => {
         <Button.Transaction
           target={`/create?ipfsHash=${ipfsHash}`}
           action="/poster/3"
-          // target={{
-          //   pathname: "/create",
-          //   query: {
-          //     ipfsHash,
-          //   },
-          // }}
         >
           Upload Content on-chain
         </Button.Transaction>,
