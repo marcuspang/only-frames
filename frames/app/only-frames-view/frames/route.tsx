@@ -26,8 +26,8 @@ const handleRequest = frames(async (ctx) => {
 
   return {
     image: (
-      <div tw="bg-purple-800 text-white w-full h-full justify-center items-center">
-        Rent farcaster storage
+      <div tw="bg-blue-800 text-white w-full h-full justify-center items-center text-5xl">
+        Content is Locked by OnlyFrames
       </div>
     ),
     imageOptions: {
@@ -35,8 +35,11 @@ const handleRequest = frames(async (ctx) => {
     },
     buttons: [
       <Button action="tx" target="/txdata" post_url="/frames">
-        Buy a unit
+        Mint
       </Button>,
+      <Button action="post" target="/view">
+      View
+    </Button>,
     ],
   };
 });
