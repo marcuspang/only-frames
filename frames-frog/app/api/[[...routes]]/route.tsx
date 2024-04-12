@@ -6,11 +6,12 @@ import { Button, Frog, TextInput } from "frog";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
-import type { Address } from "viem";
+import { createPublicClient, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
 import prisma from "../../prisma";
 import { abi } from "./abi";
 import { uploadTextData } from "./lighthouse";
+import { abi as nftabi } from "./nftabi";
 
 const app = new Frog({
   assetsPath: "/",
@@ -128,6 +129,78 @@ app.transaction("/create", async (c) => {
     chainId: `eip155:${baseSepolia.id}`,
     to: FACTORY_ADDRESS,
     args: [c.address as Address, ipfsHash, 1n, 0n],
+  });
+});
+
+app.frame("/view/:id", async (c) => {
+  if (c.transactionId) {
+    return c.res({
+      image: <div>Transaction submitted! {c.transactionId}</div>,
+    });
+  }
+  const contentId = c.req.param().id;
+
+  const content = await prisma.content.findFirst({
+    where: {
+      id: contentId,
+    },
+  });
+  const eventLogs = await getFactoryEvents();
+  const nftAddress = eventLogs.find(
+    (log) => log.ipfsHash === content?.ipfsHash
+  ) as Address;
+
+  if (!content) {
+    return c.res({
+      image: <div>No data found :(</div>,
+    });
+  }
+  return c.res({
+    image: <div>Content is Locked by OnlyFrames</div>,
+    buttons: [
+      <Button.Transaction
+        action="tx"
+        target={`/mint?ipfsHash=${content?.ipfsHash}`}
+      >
+        Mint
+      </Button.Transaction>,
+      <Button action="post">View</Button>,
+    ],
+  });
+});
+const publicClient = createPublicClient({
+  chain: baseSepolia,
+  transport: http(),
+});
+
+export async function getFactoryEvents() {
+  const logs = await publicClient.getContractEvents({
+    address: FACTORY_ADDRESS,
+    eventName: "ContentUploaded",
+    fromBlock: 8567992n,
+    toBlock: 8569992n,
+    abi,
+  });
+  return logs.map((log) => log.args);
+}
+
+app.transaction("/mint", async (c) => {
+  const ipfsHash = c.req.query().ipfsHash;
+  const eventLogs = await getFactoryEvents();
+
+  const nftAddress = eventLogs.find(
+    (log) => log.ipfsHash === ipfsHash
+  ) as Address;
+  if (!nftAddress) {
+    throw new Error("No NFT address");
+  }
+
+  return c.contract({
+    abi: nftabi,
+    functionName: "safeMint",
+    chainId: `eip155:${baseSepolia.id}`,
+    to: FACTORY_ADDRESS,
+    args: [c.address as Address],
   });
 });
 
