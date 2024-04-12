@@ -2,11 +2,11 @@
 
 import { devtools } from "frog/dev";
 // import { neynar } from 'frog/hubs'
-import { Button, Frog, TextInput } from "frog";
+import { Button, Button, Button, Frog, TextInput } from "frog";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
-import { createPublicClient, http, type Address } from "viem";
+import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
 import prisma from "../../prisma";
 import { abi } from "./abi";
@@ -149,6 +149,19 @@ app.frame("/view/:id", async (c) => {
   const nftAddress = eventLogs.find(
     (log) => log.ipfsHash === content?.ipfsHash
   ) as Address;
+  const nft = getContract({
+    address: nftAddress,
+    abi: nftabi,
+    client: publicClient,
+  });
+  const balance = await nft.read?.balanceOf(
+    c.var.interactor?.custodyAddress as Address
+  );
+  if (balance > 0) {
+    return c.res({
+      image: <div>Content is Unlocked!</div>,
+    });
+  }
 
   if (!content) {
     return c.res({
