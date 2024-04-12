@@ -1,8 +1,11 @@
 /* eslint-disable react/jsx-key */
 import { Button } from "frames.js/next";
 import { frames } from "./frames";
+import prisma from "../../prisma";
 
 const handleRequest = frames(async (ctx) => {
+  console.log(ctx.request);
+
   if (ctx.message?.transactionId) {
     return {
       image: (
@@ -23,6 +26,38 @@ const handleRequest = frames(async (ctx) => {
       ],
     };
   }
+  const contentId = ctx.searchParams?.id;
+  if (!contentId) {
+    return {
+      image: (
+        <div tw="bg-blue-800 text-white w-full h-full justify-center items-center text-5xl">
+          No data found :(
+        </div>
+      ),
+      imageOptions: {
+        aspectRatio: "1:1",
+      },
+    };
+  }
+
+  const content = await prisma.content.findFirst({
+    where: {
+      id: contentId,
+    },
+  });
+  if (!content) {
+    console.error("No content found");
+    return {
+      image: (
+        <div tw="bg-blue-800 text-white w-full h-full justify-center items-center text-5xl">
+          No data found :(
+        </div>
+      ),
+      imageOptions: {
+        aspectRatio: "1:1",
+      },
+    };
+  }
 
   return {
     image: (
@@ -34,12 +69,21 @@ const handleRequest = frames(async (ctx) => {
       aspectRatio: "1:1",
     },
     buttons: [
-      <Button action="tx" target="/txdata" post_url="/frames">
+      <Button
+        action="tx"
+        target={{
+          pathname: "/txdata",
+          query: {
+            ipfsHash: content?.ipfsHash,
+          },
+        }}
+        post_url="/frames"
+      >
         Mint
       </Button>,
       <Button action="post" target="/view">
-      View
-    </Button>,
+        View
+      </Button>,
     ],
   };
 });

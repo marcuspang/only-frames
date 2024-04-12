@@ -24,6 +24,7 @@ if (!privateKey) {
 }
 
 const handleRequest = frames(async (ctx) => {
+  console.log("here", ctx);
   if (ctx.message?.transactionId) {
     return {
       imageOptions: {
