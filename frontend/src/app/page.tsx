@@ -38,8 +38,8 @@ export default function Home() {
     const logs = await publicClient.getContractEvents({
       address: FACTORY_ADDRESS,
       eventName: "ContentUploaded",
-      fromBlock: 8567992n,
-      toBlock: 8569476n,
+      fromBlock: BigInt(8567992),
+      toBlock: BigInt(8569476),
       abi,
     });
     console.log("Logs", logs);

@@ -11,7 +11,7 @@ import { baseSepolia } from "viem/chains";
 import prisma from "../../prisma";
 import { abi } from "./abi";
 import { uploadTextData } from "./lighthouse";
-import { abi as nftabi } from "./nftabi";
+import { paywallTokenABI as nftabi } from "./nftabi";
 
 const app = new Frog({
   assetsPath: "/",
@@ -23,7 +23,7 @@ const app = new Frog({
 // Uncomment to use Edge Runtime
 // export const runtime = 'edge'
 
-export const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
+const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
 
 const images: {
   src: string;
@@ -48,12 +48,16 @@ app.frame("/poster", (c) => {
   const { transactionId } = c;
   if (transactionId) {
     return c.res({
-      image: <div>Transaction submitted! {c.transactionId}</div>,
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Transaction submitted!: {c.transactionId}
+        </div>
+      ),
     });
   }
   return c.res({
     image: (
-      <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
         Let's get you started!
       </div>
     ),
@@ -66,7 +70,7 @@ app.frame("/poster/:id", async (c) => {
   if (+id === 1) {
     return c.res({
       image: (
-        <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
           Please add your content in the input.
         </div>
       ),
@@ -99,13 +103,14 @@ app.frame("/poster/:id", async (c) => {
     // call contract
     return c.res({
       image: (
-        <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
           It's time to upload your content onchain!
         </div>
       ),
       intents: [
         <Button.Transaction
           target={`/create?ipfsHash=${ipfsHash}`}
+          action="/poster/3"
           // target={{
           //   pathname: "/create",
           //   query: {
@@ -129,7 +134,7 @@ app.frame("/poster/:id", async (c) => {
   }
   return c.res({
     image: (
-      <div style={{ color: 'black', display: 'flex', fontSize: 60, textAlign: 'center', justifyContent: 'center', alignItems: 'center' , marginTop: '250px'}}>
+      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
         Let's get you started!
       </div>
     ),
@@ -144,23 +149,47 @@ app.transaction("/create", async (c) => {
     functionName: "uploadContent",
     chainId: `eip155:${baseSepolia.id}`,
     to: FACTORY_ADDRESS,
-    args: [c.address as Address, ipfsHash, 1n, 0n],
+    args: [c.address as Address, ipfsHash, BigInt(1), BigInt(0)],
   });
 });
 
 app.frame("/view/:id", async (c) => {
-  if (c.transactionId) {
+  const contentId = c.req.param().id;
+  if (!c.var.interactor?.custodyAddress) {
     return c.res({
-      image: <div>Transaction submitted! {c.transactionId}</div>,
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Paywalled, please click below to view
+        </div>
+      ),
+      intents: [<Button action={`/view/${contentId}`}>View</Button>],
     });
   }
-  const contentId = c.req.param().id;
+  if (c.transactionId) {
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Transaction submitted! {c.transactionId}
+        </div>
+      ),
+    });
+  }
 
   const content = await prisma.content.findFirst({
     where: {
       id: contentId,
     },
   });
+
+  if (!c.var.interactor?.custodyAddress || !content) {
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          No data found :(
+        </div>
+      ),
+    });
+  }
   const eventLogs = await getFactoryEvents();
   const nftAddress = eventLogs.find(
     (log) => log.ipfsHash === content?.ipfsHash
@@ -170,23 +199,26 @@ app.frame("/view/:id", async (c) => {
     abi: nftabi,
     client: publicClient,
   });
-  const balance = await nft.read?.balanceOf(
-    c.var.interactor?.custodyAddress as Address
-  );
-  if (balance > 0) {
+  const balance = await nft.read?.balanceOf([
+    c.var.interactor?.custodyAddress as Address,
+  ]);
+  if (+(balance as BigInt) > 0) {
     return c.res({
-      image: <div>Content is Unlocked!</div>,
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Content is Unlocked!
+        </div>
+      ),
     });
   }
 
-  if (!content) {
-    return c.res({
-      image: <div>No data found :(</div>,
-    });
-  }
   return c.res({
-    image: <div>Content is Locked by OnlyFrames</div>,
-    buttons: [
+    image: (
+      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+        Content is Locked by OnlyFrames
+      </div>
+    ),
+    intents: [
       <Button.Transaction
         action="tx"
         target={`/mint?ipfsHash=${content?.ipfsHash}`}
@@ -202,12 +234,12 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-export async function getFactoryEvents() {
+async function getFactoryEvents() {
   const logs = await publicClient.getContractEvents({
     address: FACTORY_ADDRESS,
     eventName: "ContentUploaded",
-    fromBlock: 8567992n,
-    toBlock: 8569992n,
+    fromBlock: BigInt(8567992),
+    toBlock: BigInt(8569992),
     abi,
   });
   return logs.map((log) => log.args);
