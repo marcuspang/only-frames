@@ -127,7 +127,11 @@ app.frame("/poster/:id", async (c) => {
     });
   } else if (+id === 3) {
     return c.res({
-      image: images[3]!.src,
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Done!
+        </div>
+      ),
       intents: [
         <Button key="button4" action="post">
           Next
