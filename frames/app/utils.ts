@@ -1,4 +1,8 @@
 import { headers } from "next/headers";
+import { createPublicClient, http } from "viem";
+import { baseSepolia, mainnet } from "viem/chains";
+import { abi } from "./only-frames/frames/create/abi";
+import { FACTORY_ADDRESS } from "./only-frames/frames/create/route";
 
 export function currentURL(pathname: string): URL {
   const headersList = headers();
@@ -16,4 +20,19 @@ export function vercelURL() {
   return process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : undefined;
+}
+
+export const publicClient = createPublicClient({
+  chain: baseSepolia,
+  transport: http(),
+});
+
+export async function getFactoryEvents() {
+  const logs = await publicClient.getContractEvents({
+    address: FACTORY_ADDRESS,
+    eventName: "ContentUploaded",
+    fromBlock: 8567992n,
+    abi,
+  });
+  return logs.map((log) => log.args);
 }

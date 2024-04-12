@@ -1,9 +1,8 @@
-import { Button } from "frames.js/next";
-import { frames } from "./frames";
-import { uploadTextData } from "../../lighthouse";
-import { Contract } from "ethers";
-import prisma from "../../prisma";
 import { getAddressesForFid } from "frames.js";
+import { Button } from "frames.js/next";
+import { uploadTextData } from "../../lighthouse";
+import prisma from "../../prisma";
+import { frames } from "./frames";
 
 const images: {
   src: string;

@@ -4,7 +4,7 @@ import { baseSepolia } from "viem/chains";
 import { frames } from "../frames";
 import { abi } from "./abi";
 
-const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
+export const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
 
 export const POST = frames(async (ctx) => {
   if (!ctx.message) {
