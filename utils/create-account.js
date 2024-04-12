@@ -1,4 +1,5 @@
 const ethers = require("ethers");
+const fs = require("fs");
 
 // Generate a new Ethereum wallet
 const wallet = ethers.Wallet.createRandom();
@@ -32,6 +33,17 @@ async function testKeySigning() {
     "Signature Valid:",
     recoveredAddress.toLowerCase() === address.toLowerCase()
   );
+
+  if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+    console.log("Key signing test failed!");
+    process.exit(1);
+  }
 }
 
 testKeySigning();
+
+// Save the private key to a file
+fs.writeFileSync("private_key.pem", privateKey);
+
+// Save the public key (address) to a file
+fs.writeFileSync("public_key.pem", publicKey);
