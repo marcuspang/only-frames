@@ -2,7 +2,8 @@
 
 import { devtools } from "frog/dev";
 // import { neynar } from 'frog/hubs'
-import { Button, Frog, TextInput } from "frog";
+import { Box, Heading, Text, VStack, vars } from "@/app/ui";
+import { Button, Button, Frog, TextInput } from "frog";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
@@ -14,6 +15,7 @@ import { uploadTextData } from "./lighthouse";
 import { paywallTokenABI as nftabi } from "./nftabi";
 
 const app = new Frog({
+  ui: { vars },
   assetsPath: "/",
   basePath: "/api",
 }).use(neynar({ apiKey: "NEYNAR_FROG_FM", features: ["interactor", "cast"] }));
@@ -31,20 +33,20 @@ if (!privateKey) {
 app.frame("/", (c) => {
   return c.res({
     image: (
-      <div
-        style={{
-          color: "white",
-          display: "flex",
-          flexDirection: "column",
-          fontSize: 60,
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
+      <Box
+        grow
+        alignHorizontal="center"
+        alignVertical="center"
+        backgroundColor="background"
+        padding="32"
       >
-        <div>Welcome to OnlyFrames!</div>
-        <div>Let's get you started.</div>
-      </div>
+        <VStack gap="4">
+          <Heading>Welcome to OnlyFrames</Heading>
+          <Text color="text200" size="20">
+            Click a button below to get started.
+          </Text>
+        </VStack>
+      </Box>
     ),
     intents: [
       <Button action="/poster">Create Content</Button>,
@@ -58,94 +60,129 @@ app.frame("/poster", (c) => {
   if (transactionId) {
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Transaction submitted!: {c.transactionId}
-        </div>
+        <Box
+          grow
+          alignHorizontal="center"
+          alignVertical="center"
+          backgroundColor="background"
+          padding="32"
+        >
+          <VStack gap="4">
+            <Heading>Transaction Submitted</Heading>
+            <Text color="text200" size="20">
+              Transaction hash: {c.transactionId}
+            </Text>
+          </VStack>
+        </Box>
       ),
     });
   }
   return c.res({
     image: (
-      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-        Let's get you started!
-      </div>
+      <Box
+        grow
+        alignHorizontal="center"
+        alignVertical="center"
+        backgroundColor="background"
+        padding="32"
+      >
+        <VStack gap="4">
+          <Heading>Create Paywalled Content</Heading>
+        </VStack>
+      </Box>
     ),
     intents: [<Button action="/poster/1">Get Started</Button>],
   });
 });
 
-app.frame("/poster/:id", async (c) => {
-  const { id } = c.req.param();
-  if (+id === 1) {
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Please add your content in the input.
-        </div>
-      ),
-      intents: [
-        <TextInput placeholder="Enter your content here" />,
-        <Button action="/poster/2">Confirm Content</Button>,
-      ],
-    });
-  } else if (+id === 2) {
-    const content = c.inputText;
-    const fid = c.frameData?.fid;
-    const address = c.var.interactor?.custodyAddress;
-    let ipfsHash: string = "";
-    if (fid && address) {
-      if (content) {
-        // upload to ipfs
-        const { data } = await uploadTextData(privateKey, content);
-        console.log("uploaded", data);
-        ipfsHash = data.Hash;
-        // add to database
-        const createdContent = await prisma.content.create({
-          data: {
-            ipfsHash,
-            posterAddress: address,
-          },
-        });
-        console.log({ createdContent });
-      }
-    }
-    // call contract
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          It's time to upload your content onchain!
-        </div>
-      ),
-      intents: [
-        <Button.Transaction
-          target={`/create?ipfsHash=${ipfsHash}`}
-          action="/poster/3"
-        >
-          Upload Content on-chain
-        </Button.Transaction>,
-      ],
-    });
-  } else if (+id === 3) {
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Done!
-        </div>
-      ),
-      intents: [
-        <Button key="button4" action="post">
-          Next
-        </Button>,
-      ],
+app.frame("/poster/1", async (c) => {
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignHorizontal="center"
+        alignVertical="center"
+        backgroundColor="background"
+        padding="32"
+      >
+        <VStack gap="4">
+          <Heading>Add Content</Heading>
+          <Text color="text200" size="20">
+            Please enter the content you want to upload in the input below. You
+            can upload text, or ipfs hashes.
+          </Text>
+        </VStack>
+      </Box>
+    ),
+    intents: [
+      <TextInput placeholder="Enter your content here" />,
+      <Button action="/poster/2">Confirm Content</Button>,
+    ],
+  });
+});
+
+app.frame("/poster/2", async (c) => {
+  const content = c.inputText;
+  const fid = c.frameData?.fid;
+  const address = c.var.interactor?.custodyAddress;
+
+  let ipfsHash: string = "";
+
+  if (fid && address && content) {
+    // upload to ipfs
+    const { data } = await uploadTextData(privateKey, content);
+    ipfsHash = data.Hash;
+    // add to database
+    await prisma.content.create({
+      data: {
+        ipfsHash,
+        posterAddress: address,
+      },
     });
   }
   return c.res({
     image: (
-      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-        Let's get you started!
-      </div>
+      <Box
+        grow
+        alignHorizontal="center"
+        alignVertical="center"
+        backgroundColor="background"
+        padding="32"
+      >
+        <Heading>Upload Content On-chain</Heading>
+      </Box>
     ),
-    intents: [<Button action="/poster/1">Get Started</Button>],
+    intents: [
+      <Button.Transaction
+        target={`/create?ipfsHash=${ipfsHash}`}
+        action="/poster/3"
+      >
+        Upload
+      </Button.Transaction>,
+    ],
+  });
+});
+
+app.frame("/poster/3", async (c) => {
+  return c.res({
+    image: (
+      <Box
+        grow
+        alignHorizontal="center"
+        alignVertical="center"
+        backgroundColor="background"
+        padding="32"
+      >
+        <VStack gap="4">
+          <Heading>Done!</Heading>
+        </VStack>
+      </Box>
+    ),
+    intents: [
+      <Button.Link href="https://only-frames.vercel.app">
+        Click here to view your paywalled content.
+      </Button.Link>,
+    ],
   });
 });
 
@@ -162,12 +199,24 @@ app.transaction("/create", async (c) => {
 
 app.frame("/view/:id", async (c) => {
   const contentId = c.req.param().id;
+  console.log({ a: c.var.interactor });
   if (!c.var.interactor?.custodyAddress) {
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Paywalled, please click below to view
-        </div>
+        <Box
+          grow
+          alignHorizontal="center"
+          alignVertical="center"
+          backgroundColor="background"
+          padding="32"
+        >
+          <VStack gap="4">
+            <Heading>Paywalled Content</Heading>
+            <Text color="text200" size="20">
+              Click the button below to view.
+            </Text>
+          </VStack>
+        </Box>
       ),
       intents: [<Button action={`/view/${contentId}`}>View</Button>],
     });
@@ -175,10 +224,22 @@ app.frame("/view/:id", async (c) => {
   if (c.transactionId) {
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Transaction submitted! {c.transactionId}
-        </div>
+        <Box
+          grow
+          alignHorizontal="center"
+          alignVertical="center"
+          backgroundColor="background"
+          padding="32"
+        >
+          <VStack gap="4">
+            <Heading>Access Bought!</Heading>
+            <Text color="text200" size="20">
+              Refresh the frame by clicking the button below.
+            </Text>
+          </VStack>
+        </Box>
       ),
+      intents: [<Button action={`/view/${contentId}`}>Refresh</Button>],
     });
   }
 
@@ -212,18 +273,30 @@ app.frame("/view/:id", async (c) => {
   if (+(balance as BigInt) > 0) {
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Content is Unlocked!
-        </div>
+        <Box
+          grow
+          alignHorizontal="center"
+          alignVertical="center"
+          backgroundColor="background"
+          padding="32"
+        >
+          <Heading>Content Unlocked</Heading>
+        </Box>
       ),
     });
   }
 
   return c.res({
     image: (
-      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-        Content is Locked by OnlyFrames
-      </div>
+      <Box
+        grow
+        alignHorizontal="center"
+        alignVertical="center"
+        backgroundColor="background"
+        padding="32"
+      >
+        <Heading>Content Locked</Heading>
+      </Box>
     ),
     intents: [
       <Button.Transaction
@@ -236,6 +309,7 @@ app.frame("/view/:id", async (c) => {
     ],
   });
 });
+
 const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http(),
@@ -272,7 +346,9 @@ app.transaction("/mint", async (c) => {
   });
 });
 
-devtools(app, { serveStatic, appFid: 377365 });
+if (process.env.NODE_ENV === "development")
+  devtools(app, { serveStatic, appFid: 377365 });
+else devtools(app, { assetsPath: "/.frog" });
 
 export const GET = handle(app);
 export const POST = handle(app);
