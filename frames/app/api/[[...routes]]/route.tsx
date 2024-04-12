@@ -7,7 +7,14 @@ import { Button, Button, Frog, TextInput } from "frog";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
-import { createPublicClient, getContract, http, type Address } from "viem";
+import {
+  createPublicClient,
+  getContract,
+  getContract,
+  getContract,
+  http,
+  type Address,
+} from "viem";
 import { baseSepolia } from "viem/chains";
 import prisma from "../../prisma";
 import { abi } from "./abi";
@@ -252,9 +259,15 @@ app.frame("/view/:id", async (c) => {
   if (!c.var.interactor?.custodyAddress || !content) {
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          No data found :(
-        </div>
+        <Box
+          grow
+          alignHorizontal="center"
+          alignVertical="center"
+          backgroundColor="background"
+          padding="32"
+        >
+          <Heading>No data found :(</Heading>
+        </Box>
       ),
     });
   }
