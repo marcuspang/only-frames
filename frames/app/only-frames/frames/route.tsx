@@ -17,7 +17,7 @@ const images: {
 
 const handleRequest = frames(async (ctx) => {
   const page = Number(ctx.searchParams?.pageIndex ?? 0);
-  if (page == 0) {
+  if (page === 0) {
     return {
       image: images[page]!.src,
       imageOptions: {
@@ -37,7 +37,7 @@ const handleRequest = frames(async (ctx) => {
         </Button>,
       ],
     };
-  } else if (page == 1) {
+  } else if (page === 1) {
     return {
       image: images[page]!.src,
       imageOptions: {
@@ -58,12 +58,11 @@ const handleRequest = frames(async (ctx) => {
         </Button>,
       ],
     };
-  } else if (page == 2) {
+  } else if (page === 2) {
     const content = ctx.message?.inputText;
 
     // create the record
     // show a link
-
     return {
       image: images[page]!.src,
       imageOptions: {
