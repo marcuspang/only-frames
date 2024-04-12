@@ -1,8 +1,5 @@
-/* eslint-disable react/jsx-key */
 import { Button } from "frames.js/next";
 import { frames } from "./frames";
-import { createClient } from "../../utils/supabase/client";
-// import { cookies } from 'next/headers'
 
 const images: {
   src: string;
@@ -17,10 +14,8 @@ const images: {
     src: "https://remote-image.decentralized-content.com/image?url=https%3A%2F%2Fipfs.decentralized-content.com%2Fipfs%2Fbafybeiegrnialwu66u3nwzkn4gik4i2x2h4ip7y3w2dlymzlpxb5lrqbom&w=1920&q=75",
   },
 ];
-// const cookieStore = cookies();
-const supabase = createClient();
-const handleRequest = frames(async (ctx) => {
 
+const handleRequest = frames(async (ctx) => {
   const page = Number(ctx.searchParams?.pageIndex ?? 0);
   if (page == 0) {
     return {
@@ -30,6 +25,7 @@ const handleRequest = frames(async (ctx) => {
       },
       buttons: [
         <Button
+          key="button1"
           action="post"
           target={{
             query: {
@@ -39,7 +35,7 @@ const handleRequest = frames(async (ctx) => {
         >
           Get Started
         </Button>,
-      ]
+      ],
     };
   } else if (page == 1) {
     return {
@@ -50,6 +46,7 @@ const handleRequest = frames(async (ctx) => {
       textInput: "Write Content",
       buttons: [
         <Button
+          key="button2"
           action="post"
           target={{
             query: {
@@ -59,11 +56,10 @@ const handleRequest = frames(async (ctx) => {
         >
           Send Content
         </Button>,
-      ]
+      ],
     };
   } else if (page == 2) {
     const content = ctx.message?.inputText;
-
 
     // create the record
     // show a link
@@ -76,6 +72,7 @@ const handleRequest = frames(async (ctx) => {
       textInput: content,
       buttons: [
         <Button
+          key="button3"
           action="post"
           target={{
             query: {
@@ -85,9 +82,12 @@ const handleRequest = frames(async (ctx) => {
         >
           Try now
         </Button>,
-      ]
+      ],
     };
   }
+  return {
+    image: <div>Invalid page</div>,
+  };
 });
 
 export const GET = handleRequest;
