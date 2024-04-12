@@ -8,7 +8,7 @@ import {LinearCurve} from "../src/LinearCurve.sol";
 import {ICurve} from "../src/ICurve.sol";
 import {PaywallToken} from "../src/PaywallToken.sol";
 
-contract PaywallFactoryTest is Test {
+contract PaywallTokenFactoryTest is Test {
     ICurve curve;
 
     function setUp() public {
