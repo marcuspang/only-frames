@@ -14,10 +14,15 @@ contract PaywallTokenFactory {
         _curveAddress = curveAddress;
     }
 
-    function uploadContent(address user, string memory ipfsHash, uint128 spotPrice, uint128 delta) external {
+    function uploadContent(address user, string memory ipfsHash, uint128 spotPrice, uint128 delta)
+        external
+        returns (address)
+    {
         address nftAddress = _deployNFT(user, ipfsHash, spotPrice, delta);
 
         emit ContentUploaded(user, nftAddress, ipfsHash);
+
+        return nftAddress;
     }
 
     function getUserContent(address user) external view returns (address[] memory) {
