@@ -53,7 +53,13 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center p-24">
+      <div>
+        <h1 className="text-4xl font-bold">OnlyFrames</h1>
+        <p className="text-lg text-muted-foreground">
+          Bringing NFT gated content to Farcaster on Base!
+        </p>
+      </div>
       <div className="container mx-auto py-10">
         {data === null ? (
           <p>Loading...</p>
