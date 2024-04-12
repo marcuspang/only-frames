@@ -44,8 +44,8 @@ contract PaywallToken is ERC721, Ownable {
 
     receive() external payable {}
 
-    function safeMint(address to) public payable onlyOwner {
-        uint256 price = _getBuyPrice(_nextTokenId);
+    function safeMint(address to) public payable {
+        uint256 price = _getBuyPrice(_nextTokenId + 1);
         if (msg.value < price) {
             revert InsufficientFunds();
         }
