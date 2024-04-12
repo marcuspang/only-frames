@@ -1,5 +1,9 @@
 import { Button } from "frames.js/next";
 import { frames } from "./frames";
+import { uploadTextData } from "../../lighthouse";
+import { Contract } from "ethers";
+import prisma from "../../prisma";
+import { getAddressesForFid } from "frames.js";
 
 const images: {
   src: string;
@@ -15,7 +19,33 @@ const images: {
   },
 ];
 
+const privateKey = process.env.PRIVATE_KEY;
+if (!privateKey) {
+  throw new Error("Private key not found");
+}
+
 const handleRequest = frames(async (ctx) => {
+  if (ctx.message?.transactionId) {
+    return {
+      imageOptions: {
+        aspectRatio: "1:1",
+      },
+      image: (
+        <div tw="w-full h-full justify-center items-center flex text-wrap">
+          Transaction submitted! {ctx.message.transactionId}
+        </div>
+      ),
+      buttons: [
+        <Button
+          key="asds"
+          action="link"
+          target={`https://www.onceupon.gg/tx/${ctx.message.transactionId}`}
+        >
+          View on block explorer
+        </Button>,
+      ],
+    };
+  }
   const page = Number(ctx.searchParams?.pageIndex ?? 0);
   if (page === 0) {
     return {
@@ -54,15 +84,33 @@ const handleRequest = frames(async (ctx) => {
             },
           }}
         >
-          Send Content
+          Confirm Content
         </Button>,
       ],
     };
   } else if (page === 2) {
     const content = ctx.message?.inputText;
-
-    // create the record
-    // show a link
+    const fid = ctx.message?.requesterFid;
+    let ipfsHash: string = "";
+    if (fid) {
+      const addresses = await getAddressesForFid({
+        fid,
+      });
+      if (content && addresses.length > 0) {
+        // upload to ipfs
+        const { data } = await uploadTextData(privateKey, content);
+        ipfsHash = data.Hash;
+        // add to database
+        const createdContent = await prisma.content.create({
+          data: {
+            ipfsHash,
+            posterAddress: addresses[0]!.address,
+          },
+        });
+        console.log({ createdContent });
+      }
+    }
+    // call contract
     return {
       image: images[page]!.src,
       imageOptions: {
@@ -72,6 +120,28 @@ const handleRequest = frames(async (ctx) => {
       buttons: [
         <Button
           key="button3"
+          action="tx"
+          post_url="/"
+          target={{
+            pathname: "/create",
+            query: {
+              ipfsHash,
+            },
+          }}
+        >
+          Upload Content on-chain
+        </Button>,
+      ],
+    };
+  } else if (page === 3) {
+    return {
+      image: images[page]!.src,
+      imageOptions: {
+        aspectRatio: "1:1",
+      },
+      buttons: [
+        <Button
+          key="button4"
           action="post"
           target={{
             query: {
@@ -79,7 +149,7 @@ const handleRequest = frames(async (ctx) => {
             },
           }}
         >
-          Try now
+          Next
         </Button>,
       ],
     };

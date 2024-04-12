@@ -11,17 +11,24 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@lighthouse-web3/sdk": "^0.3.0",
     "@prisma/client": "^5.12.1",
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.42.3",
+    "@tanstack/react-query": "^5.29.2",
     "@vercel/kv": "^1.0.1",
     "@xmtp/frames-validator": "^0.5.0",
+    "add": "^2.0.6",
     "clsx": "^2.1.0",
+    "ethers": "^6.11.1",
     "frames.js": "^0.12.1",
     "next": "^14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "viem": "2.x",
+    "wagmi": "^2.5.19",
+    "yarn": "^1.22.22"
   },
   "engines": {
     "node": ">=18.17.0"
