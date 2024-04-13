@@ -1,20 +1,13 @@
 /** @jsxImportSource frog/jsx */
 
 import { devtools } from "frog/dev";
-// import { neynar } from 'frog/hubs'
 import { Box, Heading, Text, VStack, vars } from "@/app/ui";
-import { Button, Button, Frog, TextInput } from "frog";
+import { Button, Frog, TextInput } from "frog";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
-import {
-  createPublicClient,
-  getContract,
-  getContract,
-  getContract,
-  http,
-  type Address,
-} from "viem";
+import Error from "next/error";
+import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
 import prisma from "../../prisma";
 import { abi } from "./abi";
@@ -34,7 +27,10 @@ const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
 
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
-  throw new Error("Private key not found");
+  throw new Error({
+    statusCode: 500,
+    message: "No private key found",
+  });
 }
 
 app.frame("/", (c) => {
@@ -343,18 +339,19 @@ app.transaction("/mint", async (c) => {
   const ipfsHash = c.req.query().ipfsHash;
   const eventLogs = await getFactoryEvents();
 
-  const nftAddress = eventLogs.find(
-    (log) => log.ipfsHash === ipfsHash
-  ) as Address;
-  if (!nftAddress) {
-    throw new Error("No NFT address");
+  const nftAddress = eventLogs.find((log) => log.ipfsHash === ipfsHash);
+  if (!nftAddress || !nftAddress.nftAddress) {
+    throw new Error({
+      statusCode: 404,
+      message: "NFT not found",
+    });
   }
 
   return c.contract({
     abi: nftabi,
     functionName: "safeMint",
     chainId: `eip155:${baseSepolia.id}`,
-    to: FACTORY_ADDRESS,
+    to: nftAddress.nftAddress,
     args: [c.address as Address],
   });
 });
