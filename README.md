@@ -1,11 +1,21 @@
-# General Workflow
+# OnlyFrames
 
-## Poster User Flow
+There are 2 frames available, one for users to post their paywalled content, another one for viewing the content.
+
+Frame files can be found [in frames](/frames).
+
+Contracts can be found [in contracts](/contracts).
+
+Main homepage can be found [in frontend](/frontend).
+
+## General Workflow
+
+### Poster User Flow
 
 1. create and upload content in /post frame
 2. we send a message to poster, with the correct content to share /post/:id
 
-## Viewer User Flow
+### Viewer User Flow
 
 1. user loads frame at /post/:id
 2. server checks if user has nft of /post/:id
