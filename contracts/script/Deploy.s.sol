@@ -11,9 +11,11 @@ contract CounterScript is Script {
     PaywallTokenFactory public factory;
 
     function setUp() public {
-        // 0x3120A9D18C74c28dd6a42425B07b8decb04E9952
+        // sepolia: 0x3120A9D18C74c28dd6a42425B07b8decb04E9952
+        // mainnet: 0xD5869048daaf4C052Aa37ABA2a38888437358f84
         curve = new LinearCurve();
-        // 0x85e9C8457b01D3Eae92796279044474C4E70416c
+        // sepolia: 0x85e9C8457b01D3Eae92796279044474C4E70416c
+        // mainnet: 0xbbcF517F3d58189E9FF4acCDE435fAD61595eF45
         factory = new PaywallTokenFactory(address(curve));
     }
 
@@ -23,8 +25,8 @@ contract CounterScript is Script {
         console.log("LinearCurve address", address(curve));
         console.log("PaywallTokenFactory address", address(factory));
 
-        address nftAddress = factory.uploadContent(0x8A322f00b1097D343C824ff1BBcB2A78Be50C2D7, "QmYa3jGh5oj97ujPCGz86wR99aBh7skVtUsduwT9A6D7jH", 0, 0);
+        // address nftAddress = factory.uploadContent(0x8A322f00b1097D343C824ff1BBcB2A78Be50C2D7, "QmYa3jGh5oj97ujPCGz86wR99aBh7skVtUsduwT9A6D7jH", 0, 0);
 
-        console.log("NFT address", nftAddress);
+        // console.log("NFT address", nftAddress);
     }
 }
