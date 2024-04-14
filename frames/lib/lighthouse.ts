@@ -4,26 +4,27 @@ import {
   getAuthMessage,
   textUploadEncrypted,
 } from "@lighthouse-web3/sdk";
-import { Wallet } from "ethers";
+import type { Hex, PrivateKeyAccount } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 const LIGHTHOUSE_API_KEY = "1b275c12.ddce0b7cd4ea4605a6bbdfea2be34881";
 const TEXT_NAME = "OnlyFrames";
 
-async function signAuthMessage(wallet: Wallet) {
-  const publicKey = await wallet.getAddress();
-  const authMessage = await getAuthMessage(publicKey);
-  const signedMessage = await wallet.signMessage(authMessage.data.message);
+async function signAuthMessage(account: PrivateKeyAccount) {
+  const authMessage = await getAuthMessage(account.address);
+  const signedMessage = await account.signMessage({
+    message: authMessage.data.message,
+  });
   return signedMessage;
 }
 
 export async function uploadTextData(privateKey: string, message: string) {
-  const wallet = new Wallet(privateKey);
-  const signedMessage = await signAuthMessage(wallet);
-  const publicKey = await wallet.getAddress();
+  const account = privateKeyToAccount(privateKey as Hex);
+  const signedMessage = await signAuthMessage(account);
   const response = await textUploadEncrypted(
     message,
     LIGHTHOUSE_API_KEY,
-    publicKey,
+    account.address,
     signedMessage,
     TEXT_NAME
   );
@@ -31,15 +32,13 @@ export async function uploadTextData(privateKey: string, message: string) {
 }
 
 export const decryptTextData = async (cid: string, privateKey: string) => {
-  // const cid = "QmPXk3Z3Gx3vFJkePPZHk1NpKA7JFYAxatqgeNLD3qZwuP"; //Example: 'QmbGN1YcBM25s6Ry9V2iMMsBpDEAPzWRiYQQwCTx7PPXRZ'
-  const wallet = new Wallet(privateKey);
-  const publicKey = await wallet.getAddress();
+  const account = privateKeyToAccount(privateKey as Hex);
 
   // Get file encryption key
-  const signedMessage = await signAuthMessage(wallet);
+  const signedMessage = await signAuthMessage(account);
   const fileEncryptionKey = await fetchEncryptionKey(
     cid,
-    publicKey,
+    account.address,
     signedMessage
   );
 

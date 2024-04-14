@@ -1,72 +1,34 @@
-/** @jsxImportSource hono/jsx */
-
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { neynar } from "frog/middlewares";
-import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
-import Error from "next/error";
+// import { neynar } from 'frog/hubs'
+import { handle } from "frog/vercel";
 import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
-import { paywallTokenABI as nftabi } from "../../../lib/contracts/PaywallTokenABI";
-import { abi } from "../../../lib/contracts/PaywallTokenFactoryABI";
-import { uploadTextData } from "../../../lib/lighthouse";
-import prisma from "../../../lib/prisma";
+import { FrameWithText } from "../components/FrameWithText.js";
+import { paywallTokenABI as nftAbi } from "../lib/contracts/PaywallTokenABI.js";
+import { abi } from "../lib/contracts/PaywallTokenFactoryABI.js";
+import { uploadTextData } from "../lib/lighthouse.js";
+import prisma from "../lib/prisma.js";
 
-const app = new Frog({
+// Uncomment to use Edge Runtime.
+// export const config = {
+//   runtime: 'edge',
+// }
+
+export const app = new Frog({
   assetsPath: "/",
   basePath: "/api",
+  // Supply a Hub to enable frame verification.
+  // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 }).use(neynar({ apiKey: "NEYNAR_FROG_FM", features: ["interactor", "cast"] }));
-
-// Uncomment to use Edge Runtime
-// export const runtime = 'edge'
 
 const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
 
-const privateKey = process.env.PRIVATE_KEY;
+const privateKey = import.meta.env.VITE_PRIVATE_KEY;
 if (!privateKey) {
-  throw new Error({
-    statusCode: 500,
-    message: "No private key found",
-  });
-}
-
-function FrameWithText({
-  title,
-  description,
-}: {
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <h1
-        style={{
-          color: "white",
-          fontSize: 60,
-          letterSpacing: "-0.025em",
-        }}
-      >
-        {title}
-      </h1>
-      {description && (
-        <p
-          style={{
-            fontSize: 40,
-          }}
-        >
-          {description}
-        </p>
-      )}
-    </div>
-  );
+  throw new Error("No private key found");
 }
 
 app.frame("/", (c) => {
@@ -102,8 +64,7 @@ app.frame("/poster/1", async (c) => {
     image: (
       <FrameWithText
         title="Add Content"
-        description={`
-        Please enter the content you want to upload in the input below. You
+        description={`Please enter the content you want to upload in the input below. You
         can upload text, or ipfs hashes.`}
       />
     ),
@@ -211,7 +172,7 @@ app.frame("/view/:id", async (c) => {
   ) as Address;
   const nft = getContract({
     address: nftAddress,
-    abi: nftabi,
+    abi: nftAbi,
     client: publicClient,
   });
   const balance = await nft.read?.balanceOf([
@@ -259,14 +220,11 @@ app.transaction("/mint", async (c) => {
 
   const nftAddress = eventLogs.find((log) => log.ipfsHash === ipfsHash);
   if (!nftAddress || !nftAddress.nftAddress) {
-    throw new Error({
-      statusCode: 404,
-      message: "NFT not found",
-    });
+    throw new Error("No NFT address found");
   }
 
   return c.contract({
-    abi: nftabi,
+    abi: nftAbi,
     functionName: "safeMint",
     chainId: `eip155:${baseSepolia.id}`,
     to: nftAddress.nftAddress,
@@ -274,9 +232,10 @@ app.transaction("/mint", async (c) => {
   });
 });
 
-if (process.env.NODE_ENV === "development")
-  devtools(app, { serveStatic, appFid: 377365 });
-else devtools(app, { assetsPath: "/.frog" });
+// @ts-ignore
+const isEdgeFunction = typeof EdgeFunction !== "undefined";
+const isProduction = isEdgeFunction || import.meta.env?.MODE !== "development";
+devtools(app, isProduction ? { assetsPath: "/.frog" } : { serveStatic });
 
 export const GET = handle(app);
 export const POST = handle(app);
