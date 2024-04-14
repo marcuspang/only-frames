@@ -45,7 +45,7 @@ contract PaywallToken is ERC721, Ownable {
     receive() external payable {}
 
     function safeMint(address to) public payable {
-        uint256 price = getBuyPrice(_nextTokenId + 1);
+        uint256 price = getNextBuyPrice();
         if (msg.value < price) {
             revert InsufficientFunds();
         }
@@ -64,9 +64,13 @@ contract PaywallToken is ERC721, Ownable {
         payable(msg.sender).transfer(amount);
     }
 
-    function getBuyPrice(uint256 numItems) public view returns (uint256) {
+    function _getBuyPrice(uint256 numItems) internal view returns (uint256) {
         // TODO: add protocol fees
         (,,, uint256 inputValue,,) = _curve.getBuyInfo(_spotPrice, _delta, numItems, 0, 0);
         return inputValue;
+    }
+
+    function getNextBuyPrice() public view returns (uint256) {
+        return _getBuyPrice(_nextTokenId + 1);
     }
 }

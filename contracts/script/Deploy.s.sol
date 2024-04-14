@@ -14,7 +14,7 @@ contract CounterScript is Script {
         // sepolia: 0x3120A9D18C74c28dd6a42425B07b8decb04E9952
         // mainnet: 0xD5869048daaf4C052Aa37ABA2a38888437358f84
         curve = new LinearCurve();
-        // sepolia: 0x0B5DBC9b2CB93C611BD28636eD74995D8a32C8c7
+        // sepolia: 0xeD979fC9548dee08cE4a0A1FA8910846CCAAB416
         // mainnet: 0xbbcF517F3d58189E9FF4acCDE435fAD61595eF45
         factory = new PaywallTokenFactory(address(curve));
     }
