@@ -157,10 +157,10 @@ app.frame("/poster/3/:ipfsHash/:id", async (c) => {
     return c.res({
       image: <FrameWithText title="Done!" />,
       intents: [
-        <Button.Link href={`https://warpcast.com/~/compose?text=https://only-frames.vercel.app/api/view/${id}`}>Share on Warpcast</Button.Link>,
-        <Button action={`/view/${id}`}>View Content</Button>,
+        <Button.Link href={`https://warpcast.com/~/compose?text=https://only-frames.vercel.app/api/view/${id}`}>Share</Button.Link>,
+        <Button action={`/view/${id}`}>View Now</Button>,
         <Button.Link href="https://only-frames.vercel.app">
-          View all paywalled content
+          View All
         </Button.Link>,
       ],
     });
