@@ -69,11 +69,6 @@ export const app = new Frog({
 
 const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
 
-const privateKey = import.meta.env.VITE_PRIVATE_KEY;
-if (!privateKey) {
-  throw new Error("No private key found");
-}
-
 app.frame("/", (c) => {
   return c.res({
     image: <FrameWithText title="Welcome!" />,
@@ -119,6 +114,11 @@ app.frame("/poster/1", async (c) => {
 });
 
 app.frame("/poster/2", async (c) => {
+  const privateKey = import.meta.env?.VITE_PRIVATE_KEY;
+  if (!privateKey) {
+    throw new Error("No private key found");
+  }
+
   const content = c.inputText;
   const fid = c.frameData?.fid;
   const address = c.var.interactor?.custodyAddress;
