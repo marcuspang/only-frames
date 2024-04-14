@@ -8,8 +8,7 @@ import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
 import { paywallTokenABI as nftAbi } from "../lib/contracts/PaywallTokenABI.js";
 import { abi } from "../lib/contracts/PaywallTokenFactoryABI.js";
-import { uploadTextData } from "../lib/lighthouse.js";
-import prisma from "../lib/prisma.js";
+import { getContent, syncContent, uploadContent } from "../lib/backend.js";
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -80,17 +79,6 @@ app.frame("/", (c) => {
 });
 
 app.frame("/poster", (c) => {
-  const { transactionId } = c;
-  if (transactionId) {
-    return c.res({
-      image: (
-        <FrameWithText
-          title="Transaction Submitted"
-          description={`Transaction hash: ${transactionId}`}
-        />
-      ),
-    });
-  }
   return c.res({
     image: <FrameWithText title="Create paywalled content" />,
     intents: [<Button action="/poster/1">Get Started</Button>],
@@ -114,39 +102,33 @@ app.frame("/poster/1", async (c) => {
 });
 
 app.frame("/poster/2", async (c) => {
-  const privateKey = process.env.VITE_PRIVATE_KEY;
-  if (!privateKey) {
-    throw new Error("No private key found");
-  }
-
   const content = c.inputText;
   const fid = c.frameData?.fid;
   const address = c.var.interactor?.custodyAddress;
 
-  let ipfsHash: string = "";
-
   if (fid && address && content) {
-    // upload to ipfs
-    const { data } = await uploadTextData(privateKey, content);
-    ipfsHash = data.Hash;
-    // add to database
-    await prisma.content.create({
-      data: {
-        ipfsHash,
-        posterAddress: address,
-      },
+    const { ipfsHash, id } = await uploadContent({
+      content,
+      address,
+    });
+    let actionUrl = `/poster/3`;
+    if (ipfsHash && id) {
+      actionUrl += `/${ipfsHash}/${id}`;
+    }
+    return c.res({
+      image: <FrameWithText title="Upload content on-chain" />,
+      intents: [
+        <Button.Transaction
+          target={`/create?ipfsHash=${ipfsHash}`}
+          action={actionUrl}
+        >
+          Upload
+        </Button.Transaction>,
+      ],
     });
   }
   return c.res({
-    image: <FrameWithText title="Upload content on-chain" />,
-    intents: [
-      <Button.Transaction
-        target={`/create?ipfsHash=${ipfsHash}`}
-        action="/poster/3"
-      >
-        Upload
-      </Button.Transaction>,
-    ],
+    image: <FrameWithText title="An error has occurred" />,
   });
 });
 
@@ -155,7 +137,38 @@ app.frame("/poster/3", async (c) => {
     image: <FrameWithText title="Done!" />,
     intents: [
       <Button.Link href="https://only-frames.vercel.app">
-        Click here to view your paywalled content.
+        View all paywalled content
+      </Button.Link>,
+    ],
+  });
+});
+
+app.frame("/poster/3/:ipfsHash/:id", async (c) => {
+  const ipfsHash = c.req.param().ipfsHash;
+  const id = c.req.param().id;
+
+  if (ipfsHash && c.transactionId) {
+    await syncContent({
+      ipfsHash,
+      transactionHash: c.transactionId,
+    });
+  }
+  if (id) {
+    return c.res({
+      image: <FrameWithText title="Done!" />,
+      intents: [
+        <Button action={`/view/${id}`}>View Content</Button>,
+        <Button.Link href="https://only-frames.vercel.app">
+          View all paywalled content
+        </Button.Link>,
+      ],
+    });
+  }
+  return c.res({
+    image: <FrameWithText title="Done!" />,
+    intents: [
+      <Button.Link href="https://only-frames.vercel.app">
+        View all paywalled content
       </Button.Link>,
     ],
   });
@@ -174,7 +187,6 @@ app.transaction("/create", async (c) => {
 
 app.frame("/view/:id", async (c) => {
   const contentId = c.req.param().id;
-  console.log({ a: c.var.interactor });
   if (!c.var.interactor?.custodyAddress) {
     return c.res({
       image: (
@@ -198,45 +210,41 @@ app.frame("/view/:id", async (c) => {
     });
   }
 
-  const content = await prisma.content.findFirst({
-    where: {
-      id: contentId,
-    },
-  });
-
-  if (!c.var.interactor?.custodyAddress || !content) {
+  const content = await getContent(contentId);
+  console.log({ content });
+  if (!c.var.interactor?.custodyAddress || !content?.nftAddress) {
     return c.res({
       image: <FrameWithText title="No data found :(" />,
     });
   }
-  const eventLogs = await getFactoryEvents();
-  const nftAddress = eventLogs.find(
-    (log) => log.ipfsHash === content?.ipfsHash
-  ) as Address;
   const nft = getContract({
-    address: nftAddress,
+    address: content.nftAddress,
     abi: nftAbi,
     client: publicClient,
   });
-  const balance = await nft.read?.balanceOf([
+  const balance = (await nft.read?.balanceOf([
     c.var.interactor?.custodyAddress as Address,
-  ]);
-  if (+(balance as BigInt) > 0) {
+  ])) as bigint;
+  if (balance > BigInt(0)) {
     return c.res({
       image: <FrameWithText title="Content Unlocked" />,
     });
   }
 
   return c.res({
-    image: <FrameWithText title="Content Locked" />,
+    image: (
+      <FrameWithText
+        title="Content Locked"
+        description="Mint the NFT below to get access to this content"
+      />
+    ),
     intents: [
       <Button.Transaction
-        action="tx"
-        target={`/mint?ipfsHash=${content?.ipfsHash}`}
+        action={`/view/${contentId}`}
+        target={`/mint?nftAddress=${content.nftAddress}`}
       >
         Mint
       </Button.Transaction>,
-      <Button action="post">View</Button>,
     ],
   });
 });
@@ -246,31 +254,14 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-async function getFactoryEvents() {
-  const logs = await publicClient.getContractEvents({
-    address: FACTORY_ADDRESS,
-    eventName: "ContentUploaded",
-    fromBlock: BigInt(8567992),
-    toBlock: BigInt(8569992),
-    abi,
-  });
-  return logs.map((log) => log.args);
-}
-
 app.transaction("/mint", async (c) => {
-  const ipfsHash = c.req.query().ipfsHash;
-  const eventLogs = await getFactoryEvents();
-
-  const nftAddress = eventLogs.find((log) => log.ipfsHash === ipfsHash);
-  if (!nftAddress || !nftAddress.nftAddress) {
-    throw new Error("No NFT address found");
-  }
+  const nftAddress = c.req.query().nftAddress;
 
   return c.contract({
     abi: nftAbi,
     functionName: "safeMint",
     chainId: `eip155:${baseSepolia.id}`,
-    to: nftAddress.nftAddress,
+    to: nftAddress as Address,
     args: [c.address as Address],
   });
 });
