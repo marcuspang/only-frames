@@ -8,7 +8,7 @@ import { DataTable } from "./data-table";
 import { abi } from "./abi";
 import { createConfig, useWatchContractEvent } from "wagmi";
 
-const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
+const FACTORY_ADDRESS = "0xeD979fC9548dee08cE4a0A1FA8910846CCAAB416";
 
 const publicClient = createPublicClient({
   chain: baseSepolia,

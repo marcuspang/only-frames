@@ -1,8 +1,9 @@
 import type { Content } from "@prisma/client";
 import express from "express";
+import type { Hex } from "viem";
 import { uploadTextData } from "../lib/lighthouse";
 import prisma from "../lib/prisma";
-import { findNftAddressInLastThousandEvents } from "../lib/viem";
+import { getCreatedNftAddress } from "../lib/viem";
 
 const router = express.Router();
 
@@ -63,9 +64,9 @@ router.post<{}, SyncFrameResponse, SyncFrameRequestBody>(
   "/sync",
   async (req, res) => {
     const { ipfsHash, transactionHash } = req.body;
-    const nftAddress = await findNftAddressInLastThousandEvents(
+    const nftAddress = await getCreatedNftAddress(
       ipfsHash,
-      transactionHash
+      transactionHash as Hex
     );
     if (!nftAddress) {
       console.error(

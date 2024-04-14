@@ -6,8 +6,8 @@ import { serveStatic } from "frog/serve-static";
 import { handle } from "frog/vercel";
 import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
-import { paywallTokenABI as nftAbi } from "../lib/contracts/PaywallTokenABI.js";
-import { abi } from "../lib/contracts/PaywallTokenFactoryABI.js";
+import { abi as nftAbi } from "../lib/contracts/PaywallTokenABI.js";
+import { abi as factoryAbi } from "../lib/contracts/PaywallTokenFactoryABI.js";
 import { getContent, syncContent, uploadContent } from "../lib/backend.js";
 
 // Uncomment to use Edge Runtime.
@@ -66,7 +66,7 @@ export const app = new Frog({
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 }).use(neynar({ apiKey: "NEYNAR_FROG_FM", features: ["interactor", "cast"] }));
 
-const FACTORY_ADDRESS = "0x85e9C8457b01D3Eae92796279044474C4E70416c";
+const FACTORY_ADDRESS = "0xeD979fC9548dee08cE4a0A1FA8910846CCAAB416";
 
 app.frame("/", (c) => {
   return c.res({
@@ -177,7 +177,7 @@ app.frame("/poster/3/:ipfsHash/:id", async (c) => {
 app.transaction("/create", async (c) => {
   const ipfsHash = c.req.query().ipfsHash;
   return c.contract({
-    abi,
+    abi: factoryAbi,
     functionName: "uploadContent",
     chainId: `eip155:${baseSepolia.id}`,
     to: FACTORY_ADDRESS,
@@ -211,7 +211,6 @@ app.frame("/view/:id", async (c) => {
   }
 
   const content = await getContent(contentId);
-  console.log({ content });
   if (!c.var.interactor?.custodyAddress || !content?.nftAddress) {
     return c.res({
       image: <FrameWithText title="No data found :(" />,
@@ -235,7 +234,7 @@ app.frame("/view/:id", async (c) => {
     image: (
       <FrameWithText
         title="Content Locked"
-        description="Mint the NFT below to get access to this content"
+        description="Mint the NFT below to your custody address to get access to this content"
       />
     ),
     intents: [
@@ -257,12 +256,22 @@ const publicClient = createPublicClient({
 app.transaction("/mint", async (c) => {
   const nftAddress = c.req.query().nftAddress;
 
+  const nft = getContract({
+    address: nftAddress as Address,
+    abi: nftAbi,
+    client: publicClient,
+  });
+  const value = (await nft.read.getNextBuyPrice()) as bigint;
+  if (!c.var.interactor?.custodyAddress) {
+    throw new Error("No custody address found");
+  }
   return c.contract({
     abi: nftAbi,
     functionName: "safeMint",
     chainId: `eip155:${baseSepolia.id}`,
     to: nftAddress as Address,
-    args: [c.address as Address],
+    args: [c.var.interactor?.custodyAddress as Address],
+    value,
   });
 });
 

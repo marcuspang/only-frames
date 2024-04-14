@@ -1,4 +1,4 @@
-import { createPublicClient, http } from "viem";
+import { createPublicClient, getContract, http, type Hex } from "viem";
 import { baseSepolia } from "viem/chains";
 import { abi } from "../abi/PaywallTokenFactoryABI";
 
@@ -24,13 +24,38 @@ export async function getLastThousandEvents() {
 
 export async function findNftAddressInLastThousandEvents(
   ipfsHash: string,
-  transactionHash: string,
+  transactionHash: string
 ) {
   const logs = await getLastThousandEvents();
-  const nftAddress = logs.find(
+  const log = logs.find(
     (log) =>
       log.args.ipfsHash === ipfsHash ||
-      log.transactionHash.toLowerCase() === transactionHash.toLowerCase(),
-  )?.args.nftAddress;
-  return nftAddress;
+      log.transactionHash.toLowerCase() === transactionHash.toLowerCase()
+  );
+  console.log({ log });
+  return log?.args.nftAddress;
+}
+
+export async function getCreatedNftAddress(
+  ipfsHash: string,
+  transactionHash: Hex
+) {
+  const data = await publicClient.waitForTransactionReceipt({
+    hash: transactionHash,
+  });
+  console.log({ data, logs: data.logs });
+  if (data.logs.length === 2) {
+    return data.logs.filter((log) => log.topics.length === 3)[0].address;
+  }
+  const sender = data.from;
+  const contract = getContract({
+    address: FACTORY_ADDRESS,
+    client: publicClient,
+    abi,
+  });
+  const nftAddresses = await contract.read.getUserContent([sender]);
+  if (nftAddresses.length > 0) {
+    return nftAddresses[nftAddresses.length - 1];
+  }
+  return findNftAddressInLastThousandEvents(ipfsHash, transactionHash);
 }

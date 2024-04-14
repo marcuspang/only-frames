@@ -6,7 +6,7 @@ import {LinearCurve} from "../src/LinearCurve.sol";
 import {CurveErrorCodes} from "../src/CurveErrorCodes.sol";
 import {PaywallTokenFactory} from "../src/PaywallTokenFactory.sol";
 
-contract CounterScript is Script {
+contract DeployScript is Script {
     LinearCurve public curve;
     PaywallTokenFactory public factory;
 

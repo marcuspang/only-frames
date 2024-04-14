@@ -62,4 +62,13 @@ contract PaywallTokenTest is Test {
 
         assertEq(address(nft).balance, totalBalance);
     }
+
+    function test_buyPriceWorks() public {
+        (,,, uint256 inputValue,,) = curve.getBuyInfo(spotPrice, delta, 1, 0, 0);
+        assertEq(nft.getNextBuyPrice(), inputValue);
+
+        nft.safeMint{value: inputValue}(user);
+        assertEq(nft.ownerOf(0), user);
+        assertEq(nft.balanceOf(user), 1);
+    }
 }
