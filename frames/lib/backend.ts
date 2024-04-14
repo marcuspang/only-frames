@@ -5,7 +5,7 @@ export async function uploadContent({
   content: string;
   address: string;
 }) {
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const BASE_URL = process.env.VITE_BACKEND_URL;
 
   const res = await fetch(`${BASE_URL}/api/v1/frames`, {
     method: "POST",
@@ -34,7 +34,7 @@ export async function syncContent({
   ipfsHash: string;
   transactionHash: string;
 }) {
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const BASE_URL = process.env.VITE_BACKEND_URL;
 
   const res = await fetch(`${BASE_URL}/api/v1/frames/sync`, {
     method: "POST",
@@ -53,7 +53,8 @@ export async function syncContent({
 }
 
 export async function getContent(id: string, custodyAddress?: string) {
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const BASE_URL = process.env.VITE_BACKEND_URL;
+
   let url = `${BASE_URL}/api/v1/frames/${id}`;
   if (custodyAddress) {
     url += `?address=${custodyAddress}`;
