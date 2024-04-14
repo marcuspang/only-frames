@@ -1,6 +1,5 @@
-/** @jsxImportSource frog/jsx */
+/** @jsxImportSource hono/jsx */
 
-import { Box, Heading, Text, VStack, vars } from "@/lib/ui";
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { neynar } from "frog/middlewares";
@@ -9,13 +8,12 @@ import { serveStatic } from "frog/serve-static";
 import Error from "next/error";
 import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
-import prisma from "../../../lib/prisma";
+import { paywallTokenABI as nftabi } from "../../../lib/contracts/PaywallTokenABI";
 import { abi } from "../../../lib/contracts/PaywallTokenFactoryABI";
 import { uploadTextData } from "../../../lib/lighthouse";
-import { paywallTokenABI as nftabi } from "../../../lib/contracts/PaywallTokenABI";
+import prisma from "../../../lib/prisma";
 
 const app = new Frog({
-  ui: { vars },
   assetsPath: "/",
   basePath: "/api",
 }).use(neynar({ apiKey: "NEYNAR_FROG_FM", features: ["interactor", "cast"] }));
@@ -33,42 +31,47 @@ if (!privateKey) {
   });
 }
 
-app.frame("/", (c) => {
-  return c.res({
-    image: (
-      <div
+function FrameWithText({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <h1
         style={{
-          alignItems: "center",
-          background:
-            status === "response"
-              ? "linear-gradient(to right, #432889, #17101F)"
-              : "black",
-          backgroundSize: "100% 100%",
-          display: "flex",
-          flexDirection: "column",
-          flexWrap: "nowrap",
-          height: "100%",
-          justifyContent: "center",
-          textAlign: "center",
-          width: "100%",
+          color: "white",
+          fontSize: 60,
+          letterSpacing: "-0.025em",
         }}
       >
-        <div
+        {title}
+      </h1>
+      {description && (
+        <p
           style={{
-            color: "white",
-            fontSize: 60,
-            fontStyle: "normal",
-            letterSpacing: "-0.025em",
-            lineHeight: 1.4,
-            marginTop: 30,
-            padding: "0 120px",
-            whiteSpace: "pre-wrap",
+            fontSize: 40,
           }}
         >
-          Welcome!
-        </div>
-      </div>
-    ),
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+app.frame("/", (c) => {
+  return c.res({
+    image: <FrameWithText title="Welcome!" />,
     intents: [
       <Button action="/poster">Create Content</Button>,
       <Button action="/view">View Content</Button>,
@@ -81,37 +84,15 @@ app.frame("/poster", (c) => {
   if (transactionId) {
     return c.res({
       image: (
-        <Box
-          grow
-          alignHorizontal="center"
-          alignVertical="center"
-          backgroundColor="background"
-          padding="32"
-        >
-          <VStack gap="4">
-            <Heading>Transaction Submitted</Heading>
-            <Text color="text200" size="20">
-              Transaction hash: {c.transactionId}
-            </Text>
-          </VStack>
-        </Box>
+        <FrameWithText
+          title="Transaction Submitted"
+          description={`Transaction hash: ${transactionId}`}
+        />
       ),
     });
   }
   return c.res({
-    image: (
-      <Box
-        grow
-        alignHorizontal="center"
-        alignVertical="center"
-        backgroundColor="background"
-        padding="32"
-      >
-        <VStack gap="4">
-          <Heading>Create Paywalled Content</Heading>
-        </VStack>
-      </Box>
-    ),
+    image: <FrameWithText title="Create paywalled content" />,
     intents: [<Button action="/poster/1">Get Started</Button>],
   });
 });
@@ -119,21 +100,12 @@ app.frame("/poster", (c) => {
 app.frame("/poster/1", async (c) => {
   return c.res({
     image: (
-      <Box
-        grow
-        alignHorizontal="center"
-        alignVertical="center"
-        backgroundColor="background"
-        padding="32"
-      >
-        <VStack gap="4">
-          <Heading>Add Content</Heading>
-          <Text color="text200" size="20">
-            Please enter the content you want to upload in the input below. You
-            can upload text, or ipfs hashes.
-          </Text>
-        </VStack>
-      </Box>
+      <FrameWithText
+        title="Add Content"
+        description={`
+        Please enter the content you want to upload in the input below. You
+        can upload text, or ipfs hashes.`}
+      />
     ),
     intents: [
       <TextInput placeholder="Enter your content here" />,
@@ -162,17 +134,7 @@ app.frame("/poster/2", async (c) => {
     });
   }
   return c.res({
-    image: (
-      <Box
-        grow
-        alignHorizontal="center"
-        alignVertical="center"
-        backgroundColor="background"
-        padding="32"
-      >
-        <Heading>Upload Content On-chain</Heading>
-      </Box>
-    ),
+    image: <FrameWithText title="Upload content on-chain" />,
     intents: [
       <Button.Transaction
         target={`/create?ipfsHash=${ipfsHash}`}
@@ -186,19 +148,7 @@ app.frame("/poster/2", async (c) => {
 
 app.frame("/poster/3", async (c) => {
   return c.res({
-    image: (
-      <Box
-        grow
-        alignHorizontal="center"
-        alignVertical="center"
-        backgroundColor="background"
-        padding="32"
-      >
-        <VStack gap="4">
-          <Heading>Done!</Heading>
-        </VStack>
-      </Box>
-    ),
+    image: <FrameWithText title="Done!" />,
     intents: [
       <Button.Link href="https://only-frames.vercel.app">
         Click here to view your paywalled content.
@@ -224,20 +174,10 @@ app.frame("/view/:id", async (c) => {
   if (!c.var.interactor?.custodyAddress) {
     return c.res({
       image: (
-        <Box
-          grow
-          alignHorizontal="center"
-          alignVertical="center"
-          backgroundColor="background"
-          padding="32"
-        >
-          <VStack gap="4">
-            <Heading>Paywalled Content</Heading>
-            <Text color="text200" size="20">
-              Click the button below to view.
-            </Text>
-          </VStack>
-        </Box>
+        <FrameWithText
+          title="Paywalled Content"
+          description={`Click the button below to view`}
+        />
       ),
       intents: [<Button action={`/view/${contentId}`}>View</Button>],
     });
@@ -245,20 +185,10 @@ app.frame("/view/:id", async (c) => {
   if (c.transactionId) {
     return c.res({
       image: (
-        <Box
-          grow
-          alignHorizontal="center"
-          alignVertical="center"
-          backgroundColor="background"
-          padding="32"
-        >
-          <VStack gap="4">
-            <Heading>Access Bought!</Heading>
-            <Text color="text200" size="20">
-              Refresh the frame by clicking the button below.
-            </Text>
-          </VStack>
-        </Box>
+        <FrameWithText
+          title="Access bought!"
+          description={`Refresh to view the content`}
+        />
       ),
       intents: [<Button action={`/view/${contentId}`}>Refresh</Button>],
     });
@@ -272,17 +202,7 @@ app.frame("/view/:id", async (c) => {
 
   if (!c.var.interactor?.custodyAddress || !content) {
     return c.res({
-      image: (
-        <Box
-          grow
-          alignHorizontal="center"
-          alignVertical="center"
-          backgroundColor="background"
-          padding="32"
-        >
-          <Heading>No data found :(</Heading>
-        </Box>
-      ),
+      image: <FrameWithText title="No data found :(" />,
     });
   }
   const eventLogs = await getFactoryEvents();
@@ -299,32 +219,12 @@ app.frame("/view/:id", async (c) => {
   ]);
   if (+(balance as BigInt) > 0) {
     return c.res({
-      image: (
-        <Box
-          grow
-          alignHorizontal="center"
-          alignVertical="center"
-          backgroundColor="background"
-          padding="32"
-        >
-          <Heading>Content Unlocked</Heading>
-        </Box>
-      ),
+      image: <FrameWithText title="Content Unlocked" />,
     });
   }
 
   return c.res({
-    image: (
-      <Box
-        grow
-        alignHorizontal="center"
-        alignVertical="center"
-        backgroundColor="background"
-        padding="32"
-      >
-        <Heading>Content Locked</Heading>
-      </Box>
-    ),
+    image: <FrameWithText title="Content Locked" />,
     intents: [
       <Button.Transaction
         action="tx"
