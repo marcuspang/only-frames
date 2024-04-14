@@ -1,9 +1,12 @@
 import type { Content } from "@prisma/client";
 import express from "express";
-import type { Hex } from "viem";
-import { uploadTextData } from "../lib/lighthouse";
+import { type Address, type Hex } from "viem";
+import { decryptTextData, uploadTextData } from "../lib/lighthouse";
 import prisma from "../lib/prisma";
-import { getCreatedNftAddress } from "../lib/viem";
+import {
+  checkIfUserHasAccessToContent,
+  getCreatedNftAddress,
+} from "../lib/viem";
 
 const router = express.Router();
 
@@ -101,10 +104,12 @@ router.post<{}, SyncFrameResponse, SyncFrameRequestBody>(
 type GetFrameResponse = {
   success: boolean;
   content?: Content;
+  decryptedData?: string;
 };
 
 router.get<{ id: string }, GetFrameResponse>("/:id", async (req, res) => {
   const { id } = req.params;
+  const { address } = req.query;
   try {
     const content = await prisma.content.findUnique({
       where: {
@@ -115,6 +120,24 @@ router.get<{ id: string }, GetFrameResponse>("/:id", async (req, res) => {
       return res.status(404).json({
         success: false,
       });
+    }
+    // if address is sent, check if user has access and decrypt the ipfs content
+    if (address && content.nftAddress) {
+      const hasAccess = await checkIfUserHasAccessToContent(
+        content.nftAddress as Address,
+        address as Address
+      );
+      if (hasAccess) {
+        const decryptedData = await decryptTextData(
+          content.ipfsHash,
+          privateKey
+        );
+        return res.status(200).json({
+          success: true,
+          content,
+          decryptedData,
+        });
+      }
     }
     return res.status(200).json({
       success: true,

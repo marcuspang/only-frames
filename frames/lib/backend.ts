@@ -52,13 +52,17 @@ export async function syncContent({
   }
 }
 
-export async function getContent(id: string) {
+export async function getContent(id: string, custodyAddress?: string) {
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  let url = `${BASE_URL}/api/v1/frames/${id}`;
+  if (custodyAddress) {
+    url += `?address=${custodyAddress}`;
+  }
 
-  const res = await fetch(`${BASE_URL}/api/v1/frames/${id}`);
+  const res = await fetch(url);
   const data = await res.json();
   if (!data.success) {
     throw new Error("Error getting content");
   }
-  return data.content;
+  return data;
 }

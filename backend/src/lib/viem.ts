@@ -1,6 +1,14 @@
-import { createPublicClient, getContract, http, type Hex } from "viem";
+import {
+  createPublicClient,
+  getContract,
+  http,
+  type Address,
+  type Hex,
+} from "viem";
 import { baseSepolia } from "viem/chains";
 import { abi } from "../abi/PaywallTokenFactoryABI";
+import { abi as nftAbi } from "../abi/PaywallTokenABI";
+import { privateKeyToAccount } from "viem/accounts";
 
 export const publicClient = createPublicClient({
   transport: http(),
@@ -9,6 +17,19 @@ export const publicClient = createPublicClient({
 
 // sepolia
 const FACTORY_ADDRESS = "0xeD979fC9548dee08cE4a0A1FA8910846CCAAB416";
+
+export async function checkIfUserHasAccessToContent(
+  nftAddress: Address,
+  userAddress: Address
+) {
+  const contract = getContract({
+    address: nftAddress,
+    client: publicClient,
+    abi: nftAbi,
+  });
+  const nftOwner = await contract.read.balanceOf([userAddress]);
+  return nftOwner > BigInt(0);
+}
 
 export async function getLastThousandEvents() {
   const currentBlock = await publicClient.getBlockNumber();

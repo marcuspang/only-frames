@@ -209,24 +209,24 @@ app.frame("/view/:id", async (c) => {
       intents: [<Button action={`/view/${contentId}`}>Refresh</Button>],
     });
   }
-
-  const content = await getContent(contentId);
-  if (!c.var.interactor?.custodyAddress || !content?.nftAddress) {
+  const custodyAddress = c.var.interactor?.custodyAddress;
+  const { content, decryptedData } = await getContent(
+    contentId,
+    custodyAddress
+  );
+  if (!custodyAddress || !content?.nftAddress) {
     return c.res({
       image: <FrameWithText title="No data found :(" />,
     });
   }
-  const nft = getContract({
-    address: content.nftAddress,
-    abi: nftAbi,
-    client: publicClient,
-  });
-  const balance = (await nft.read?.balanceOf([
-    c.var.interactor?.custodyAddress as Address,
-  ])) as bigint;
-  if (balance > BigInt(0)) {
+  if (decryptedData) {
     return c.res({
-      image: <FrameWithText title="Content Unlocked" />,
+      image: (
+        <FrameWithText
+          title="Content Unlocked"
+          description={decryptedData}
+        />
+      ),
     });
   }
 
