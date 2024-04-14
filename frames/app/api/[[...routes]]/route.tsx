@@ -1,18 +1,18 @@
 /** @jsxImportSource frog/jsx */
 
-import { devtools } from "frog/dev";
-import { Box, Heading, Text, VStack, vars } from "@/app/ui";
+import { Box, Heading, Text, VStack, vars } from "@/lib/ui";
 import { Button, Frog, TextInput } from "frog";
+import { devtools } from "frog/dev";
 import { neynar } from "frog/middlewares";
 import { handle } from "frog/next";
 import { serveStatic } from "frog/serve-static";
 import Error from "next/error";
 import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
-import prisma from "../../prisma";
-import { abi } from "./abi";
-import { uploadTextData } from "./lighthouse";
-import { paywallTokenABI as nftabi } from "./nftabi";
+import prisma from "../../../lib/prisma";
+import { abi } from "../../../lib/contracts/PaywallTokenFactoryABI";
+import { uploadTextData } from "../../../lib/lighthouse";
+import { paywallTokenABI as nftabi } from "../../../lib/contracts/PaywallTokenABI";
 
 const app = new Frog({
   ui: { vars },
@@ -36,20 +36,38 @@ if (!privateKey) {
 app.frame("/", (c) => {
   return c.res({
     image: (
-      <Box
-        grow
-        alignHorizontal="center"
-        alignVertical="center"
-        backgroundColor="background"
-        padding="32"
+      <div
+        style={{
+          alignItems: "center",
+          background:
+            status === "response"
+              ? "linear-gradient(to right, #432889, #17101F)"
+              : "black",
+          backgroundSize: "100% 100%",
+          display: "flex",
+          flexDirection: "column",
+          flexWrap: "nowrap",
+          height: "100%",
+          justifyContent: "center",
+          textAlign: "center",
+          width: "100%",
+        }}
       >
-        <VStack gap="4">
-          <Heading>Welcome to OnlyFrames</Heading>
-          <Text color="text200" size="20">
-            Click a button below to get started.
-          </Text>
-        </VStack>
-      </Box>
+        <div
+          style={{
+            color: "white",
+            fontSize: 60,
+            fontStyle: "normal",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.4,
+            marginTop: 30,
+            padding: "0 120px",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          Welcome!
+        </div>
+      </div>
     ),
     intents: [
       <Button action="/poster">Create Content</Button>,

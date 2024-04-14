@@ -16,7 +16,7 @@ datasource db {
 
 model Content {
   id            String   @id @default(cuid())
-  ipfsHash      String
+  ipfsHash      String   @unique
   posterAddress String
   nftAddress    String?
   createdAt     DateTime @default(now())
