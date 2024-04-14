@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npx prisma generate && frog vercel-build",
+    "build": "frog vercel-build",
     "dev": "frog dev",
     "deploy": "vercel"
   },
