@@ -6,7 +6,6 @@ import { serveStatic } from "frog/serve-static";
 import { handle } from "frog/vercel";
 import { createPublicClient, getContract, http, type Address } from "viem";
 import { baseSepolia } from "viem/chains";
-import { FrameWithText } from "../components/FrameWithText.js";
 import { paywallTokenABI as nftAbi } from "../lib/contracts/PaywallTokenABI.js";
 import { abi } from "../lib/contracts/PaywallTokenFactoryABI.js";
 import { uploadTextData } from "../lib/lighthouse.js";
@@ -16,6 +15,50 @@ import prisma from "../lib/prisma.js";
 // export const config = {
 //   runtime: 'edge',
 // }
+
+function FrameWithText({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+        width: "100%",
+        background: "black",
+        textAlign: "center",
+        padding: "30px",
+      }}
+    >
+      <h1
+        style={{
+          color: "white",
+          fontSize: 60,
+          letterSpacing: "-0.025em",
+        }}
+      >
+        {title}
+      </h1>
+      {description && (
+        <p
+          style={{
+            fontSize: 40,
+            color: "white",
+          }}
+        >
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export const app = new Frog({
   assetsPath: "/",
