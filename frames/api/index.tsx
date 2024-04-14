@@ -114,7 +114,7 @@ app.frame("/poster/1", async (c) => {
 });
 
 app.frame("/poster/2", async (c) => {
-  const privateKey = import.meta.env?.VITE_PRIVATE_KEY;
+  const privateKey = process.env.VITE_PRIVATE_KEY;
   if (!privateKey) {
     throw new Error("No private key found");
   }
