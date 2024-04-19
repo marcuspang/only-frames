@@ -289,9 +289,9 @@
   integrity sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==
 
 "@hono/node-server@^1.8.2":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.10.0.tgz#2ea8a1b744e368c5b9163ea795b678ce99a35bf6"
-  integrity sha512-XXFmIT4swUm3gG9yPU/HMAqHAHTP/Wr2mqgJakOFQhbbWipomaLu7ys0h9KrgF9032j18efBYk2aHz2SfgDbTA==
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.11.0.tgz#18d73d0a79d1c0ca387d02866231b5e2d9eb7b5e"
+  integrity sha512-TLIJq9TMtD1NEG1mVoqNUn1Ita0qSaB5XboZErjFBcO/GJYXwWY4dVdTi9G0lbxtu0x+hJXDItcLaFHb7rlFTw==
 
 "@hono/valibot-validator@^0.2.2":
   version "0.2.2"
